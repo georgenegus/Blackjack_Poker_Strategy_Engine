@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from fractions import Fraction
 
 _SURRENDER_CODES = {"late": "ls", "early": "es", "none": "ns"}
+DOUBLE_RANGES = {"any": None, "9-11": {9, 10, 11}, "10-11": {10, 11}}
 
 
 @dataclass(frozen=True)
@@ -58,3 +59,12 @@ class RuleSet:
         if not self.split_by_value:
             parts.append("novalsplit")
         return "-".join(parts)
+
+
+def double_allowed(rules: RuleSet, total: int, is_soft: bool) -> bool:
+    """Whether rules.double_on permits doubling a 2-card hand with this total.
+    Shared by game.py (mechanics) and grid_builder.py (solving) so the two never
+    drift apart on what "double_on" means."""
+    allowed = DOUBLE_RANGES[rules.double_on]
+    hard_equivalent = total - 10 if is_soft else total
+    return allowed is None or hard_equivalent in allowed

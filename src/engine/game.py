@@ -11,7 +11,7 @@ from typing import Callable, List, Optional
 from src.engine.cards import Card
 from src.engine.dealer import play_dealer
 from src.engine.hand import Hand
-from src.engine.rules import RuleSet
+from src.engine.rules import RuleSet, double_allowed
 from src.engine.shoe import Shoe
 
 
@@ -25,8 +25,6 @@ class Action(Enum):
 
 DecideFn = Callable[[Hand, Card, Shoe, RuleSet], Action]
 InsuranceFn = Callable[[Hand, Card, Shoe, RuleSet], bool]
-
-_DOUBLE_RANGES = {"any": None, "9-11": {9, 10, 11}, "10-11": {10, 11}}
 
 
 @dataclass
@@ -46,13 +44,6 @@ class RoundResult:
     dealer_blackjack: bool = False
 
 
-def _hard_total_for_double(hand: Hand) -> int:
-    return hand.total - 10 if hand.is_soft else hand.total
-
-
-def _double_allowed(hand: Hand, rules: RuleSet) -> bool:
-    allowed = _DOUBLE_RANGES[rules.double_on]
-    return allowed is None or _hard_total_for_double(hand) in allowed
 
 
 def _settle(ph: PlayerHand, dealer_hand: Hand) -> float:
@@ -100,7 +91,11 @@ def _play_one_hand(
     while True:
         # hand_count[0] is the total hands in the round so far -- true globally, not just
         # along this hand's split lineage, because every split adds exactly one hand overall.
-        can_double = first_action and (hand_count[0] == 1 or rules.double_after_split) and _double_allowed(hand, rules)
+        can_double = (
+            first_action
+            and (hand_count[0] == 1 or rules.double_after_split)
+            and double_allowed(rules, hand.total, hand.is_soft)
+        )
         can_split = (
             first_action
             and hand.is_pair

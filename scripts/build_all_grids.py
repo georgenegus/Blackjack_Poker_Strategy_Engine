@@ -9,7 +9,11 @@ solve on demand, only ever load an already-cached grid via solve_grid_cached().
 """
 
 import itertools
+import os
+import sys
 import time
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.engine.rules import RuleSet
 from src.strategy.grid_builder import solve_grid_cached

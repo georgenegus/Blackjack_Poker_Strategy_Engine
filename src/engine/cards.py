@@ -6,7 +6,7 @@ identically everywhere except Hand.is_pair_exact. This collapse is what keeps
 the Phase 3 solver's memoisation tractable; see .agents/coding-standards.md.
 """
 
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Tuple
 
 RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
 SUITS = ["S", "H", "D", "C"]
@@ -37,3 +37,22 @@ class Card(NamedTuple):
     def is_red(self) -> bool:
         """Only meaningful for Red Seven counting (Phase 6); suit is otherwise decorative."""
         return self.suit in RED_SUITS
+
+
+def advance_total(total: int, is_soft: bool, rank_idx: int) -> Tuple[int, bool]:
+    """Add one card (by rank bucket index) to a running (total, is_soft) hand state.
+
+    (total, is_soft) is a sufficient statistic for this: a stable, post-downgrade hand
+    never has more than one ace still counted as 11 (two aces at 11 alone already sum
+    to 22, forcing an immediate downgrade), so the exact ace count beyond that boolean
+    never needs tracking. Shared by the dealer's draw recursion (dealer_probs.py) and
+    the player's hit recursion (ev_solver.py) -- see ev_solver_conventions/SKILL.md.
+    """
+    aces_as_11 = 1 if is_soft else 0
+    if rank_idx == RANK_INDEX["A"]:
+        aces_as_11 += 1
+    t = total + HARD_VALUE[rank_idx]
+    while t > 21 and aces_as_11 > 0:
+        t -= 10
+        aces_as_11 -= 1
+    return t, aces_as_11 > 0

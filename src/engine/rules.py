@@ -24,6 +24,10 @@ class RuleSet:
     resplit_aces: bool = False
     hit_split_aces: bool = False
     dealer_peeks: bool = True
+    obbo: bool = False                # "original bets only": under no-peek, a dealer blackjack
+                                       # revealed after the player has doubled/split costs only the
+                                       # original bet, not the doubled/split additions. Irrelevant
+                                       # when dealer_peeks=True.
     penetration: float = 0.75
     split_by_value: bool = True       # True: T/J/Q/K mutually splittable
 
@@ -49,6 +53,8 @@ class RuleSet:
             parts.append("hsa")
         if not self.dealer_peeks:
             parts.append("nopeek")
+            if self.obbo:
+                parts.append("obbo")
         if not self.split_by_value:
             parts.append("novalsplit")
         return "-".join(parts)

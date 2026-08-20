@@ -9,6 +9,10 @@ build/
 .vscode/
 .idea/
 
+# Local Claude Code session artifacts (not project config)
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
 # Cached data — solved grids/indices/baselines ARE committed (small, deterministic JSON);
 # only raw Monte Carlo output is ignored
 data/sims/

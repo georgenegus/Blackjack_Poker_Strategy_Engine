@@ -848,7 +848,7 @@ Expected: `ALL BASELINES PASS` with a per-ruleset table. Any deviation must be a
 | Phase | Component | Status | Notes |
 |-------|-----------|:------:|-------|
 | 0 | Repository Bootstrap & GitHub Link | `[x] Completed` | Local repo initialised (`git init -b main`), full `.agents/`+`.claude/skills/` mirror (5 SKILL.md files incl. 3 new blackjack-specific skills), `CLAUDE.md`, `README.md`, `.gitignore`, `.vscode/settings.json`, `requirements.txt` written and committed (root commit `41368d5`, 18 files; tracking-update commit `fa99478`). User created the GitHub repo manually at `github.com/georgenegus/Blackjack_Strategy_Engine`; remote added and `main` pushed and tracking `origin/main`. `gh` CLI was installed via winget as a side effect but device-code auth was not completed — not needed since the repo was created manually |
-| 1 | Card / Shoe / Hand / RuleSet | `[ ]` | Pending |
+| 1 | Card / Shoe / Hand / RuleSet | `[x] Completed` | Built `src/engine/{cards,hand,shoe,rules}.py`. Both plan verification commands reproduce the exact expected output (`[24 24 24 24 24 24 24 24 96 24] 312`; `17 True` / `17 False`). Additional checks all passed: `RuleSet().key()` == `"6d-s17-das-ls-p75"` (matches the plan's worked example exactly); `Shoe.from_composition`, `cut_card_reached` at 75% penetration, and `reset()` all behave correctly; `Hand` correctly distinguishes T,K as a bucket-pair (`is_pair`) but not an exact pair (`is_pair_exact`), and correctly marks a from_split 21 as *not* blackjack while a normal A,K is |
 | 2 | Dealer Logic & Round State Machine | `[ ]` | Pending |
 | 3 | Exact EV Solver | `[ ]` | Pending |
 | 4 | Basic Strategy Grid Generator | `[ ]` | Pending |

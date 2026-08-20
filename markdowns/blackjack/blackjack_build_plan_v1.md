@@ -847,7 +847,7 @@ Expected: `ALL BASELINES PASS` with a per-ruleset table. Any deviation must be a
 
 | Phase | Component | Status | Notes |
 |-------|-----------|:------:|-------|
-| 0 | Repository Bootstrap & GitHub Link | `[ ]` | Pending — `gh` not installed; remote must be created via github.com or `winget install GitHub.cli` first |
+| 0 | Repository Bootstrap & GitHub Link | `[x] Partially completed` | Local repo done: `git init -b main`, full `.agents/`+`.claude/skills/` mirror (5 SKILL.md files incl. 3 new blackjack-specific skills), `CLAUDE.md`, `README.md`, `.gitignore`, `.vscode/settings.json`, `requirements.txt` written and committed (root commit `41368d5`, 18 files). **GitHub remote not yet created** — `gh` is not installed on this machine; needs `winget install GitHub.cli` (then `gh repo create`) or manual creation at github.com, followed by `git remote add origin <url> && git push -u origin main` |
 | 1 | Card / Shoe / Hand / RuleSet | `[ ]` | Pending |
 | 2 | Dealer Logic & Round State Machine | `[ ]` | Pending |
 | 3 | Exact EV Solver | `[ ]` | Pending |

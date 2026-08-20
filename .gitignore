@@ -1,0 +1,25 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Cached data — solved grids/indices/baselines ARE committed (small, deterministic JSON);
+# only raw Monte Carlo output is ignored
+data/sims/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+.pytest_cache/
+tests/one-time/
+
+# Runtime logs
+logs/

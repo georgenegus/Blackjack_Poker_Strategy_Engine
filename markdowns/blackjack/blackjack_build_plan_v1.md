@@ -891,7 +891,17 @@ Both show a persistent, player-unfavorable bias too large to be sampling noise a
 
 **Decision (user, 2026-08-21):** stop active debugging here rather than continue spending the ~90-minute-per-verification-cycle cost, and document the open state transparently. **Phase 6+ should not begin until this is resolved or a wider tolerance is explicitly accepted** — per the plan's own caution that an unvalidated solver/integration corrupts everything downstream. No `data/baselines/*.json` has been locked; Check 2 must pass (or be explicitly waived) before locking a baseline that later phases would trust.
 
-**Check 3 — rule-effect deltas: deferred**, not attempted. The plan's Verification section gives no explicit command for it (only Checks 1 and 2 have one), and building a properly rigorous version was judged lower priority than resolving Check 2 first, especially since `exact_edge.py` (built for Check 2's diagnosis) is directly reusable for this later at negligible additional cost — recompute `exact_house_edge()` for pairs of rulesets differing in one field and compare the delta to the plan's published deltas (H17 ≈ −0.22%, DAS ≈ +0.14%, LS ≈ +0.08%, 6:5 ≈ −1.39%, RSA ≈ +0.08%).
+**Check 3 — rule-effect deltas: 4 of 5 done, all close to published.** Picked back up (autonomous continuation, 2026-08-21) using `exact_edge.py` — cheap (seconds per ruleset) since it doesn't need Monte Carlo precision. Base case: 6D/S17/DAS/no-surrender/3:2 = **0.4002%**, matching the 6D anchor (0.40%) almost exactly — a second, independent confirmation (beyond Check 1) that the solver itself is sound, further isolating Check 2's unresolved gap to the simulation-integration layer specifically.
+
+| Rule change | Exact delta | Published | Match |
+|---|---:|---:|---|
+| H17 (vs S17) | +0.2131pp | ~+0.22pp | close |
+| No DAS (vs DAS) | +0.1419pp | ~+0.14pp | very close |
+| No surrender (vs LS) | +0.0724pp | ~+0.08pp | close |
+| 6:5 payout (vs 3:2) | +1.3597pp | ~+1.39pp | very close |
+| RSA | not yet run — see finding below | ~+0.08pp | — |
+
+**Design issue found while preparing the RSA delta**: `game.py`'s `_play_one_hand` and `ev_solver.py`'s `ev_split_hand` both gate a split-aces hand's *entire* further action — including the ability to **resplit** on drawing a third ace — behind `rules.hit_split_aces`. In standard casino terminology these are independent toggles: "resplit aces" (may split again if a split-ace hand draws another ace) is commonly offered without also offering "hit split aces" (may hit non-ace cards on a split-ace hand) — the current code conflates them, so `resplit_aces=True` has **zero effect** whenever `hit_split_aces=False` (the default), even though the RuleSet's own field comment already claimed "RSA ≈ +0.08%" as a standalone effect. `resplit_aces` defaults to `False` in every ruleset tested so far, so this bug has not affected any result reported above or in Check 2 — it was caught by design review while setting up the RSA delta, not by an observed discrepancy. Fix and verification tracked as a follow-up in this same session.
 
 ---
 

@@ -89,8 +89,29 @@ def _play_one_hand(
     ph = PlayerHand(hand=hand, bet=bet)
 
     if is_split_aces and not rules.hit_split_aces:
-        # The one card split aces receive was already dealt by the SPLIT branch below;
-        # no further action is offered.
+        # The one card split aces receive was already dealt by the SPLIT branch below.
+        # Normally no further action -- UNLESS this card is itself another ace and
+        # resplit_aces is allowed, in which case RESPLITTING (only, not hitting) is
+        # still offered. "Resplit aces" and "hit split aces" are independent casino
+        # rule toggles in standard terminology, not one gating the other.
+        can_resplit_aces = hand.is_pair and rules.resplit_aces and hand_count[0] < rules.resplit_to
+        if not can_resplit_aces:
+            results.append(ph)
+            return
+
+        legal = {Action.STAND, Action.SPLIT}
+        action = decide_fn(hand, dealer_up, shoe, rules, frozenset(legal))
+        if action not in legal:
+            raise ValueError(f"Illegal action {action!r} for {hand!r} (legal: {legal})")
+        if action is Action.SPLIT:
+            hand_count[0] += 1
+            c1, c2 = hand.cards
+            left, right = Hand([c1], from_split=True), Hand([c2], from_split=True)
+            left.add(shoe.deal())
+            right.add(shoe.deal())
+            _play_one_hand(left, bet, dealer_up, shoe, rules, decide_fn, results, hand_count, is_split_aces=True)
+            _play_one_hand(right, bet, dealer_up, shoe, rules, decide_fn, results, hand_count, is_split_aces=True)
+            return
         results.append(ph)
         return
 

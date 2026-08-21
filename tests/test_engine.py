@@ -74,6 +74,38 @@ def test_split_aces_one_card_each_and_21_after_split_pays_even_money():
     assert result.payouts == [10.0, -10.0]
 
 
+# --- resplit_aces and hit_split_aces are independent toggles -----------------------
+
+def test_resplit_aces_offered_when_a_split_ace_draws_another_ace():
+    # player: A,A -> split; left draws A (another ace!) -> resplits again (since
+    # resplit_aces=True); left_left draws K (21, from_split), left_right draws 5
+    # (soft 16); right (from the ORIGINAL split) draws 6 (soft 17), no re-pair, no
+    # further offer. dealer: 9,9=18, stands immediately under S17.
+    shoe = ScriptedShoe(["A", "9", "A", "9", "A", "6", "K", "5"])
+    rules = RuleSet(resplit_aces=True)  # hit_split_aces stays default False
+    result = play_round(shoe, rules, bet=10, decide_fn=_always(Action.SPLIT))
+
+    assert len(result.player_hands) == 3
+    left_left, left_right, right = result.player_hands
+    assert len(left_left.hand.cards) == 2 and left_left.hand.total == 21 and not left_left.hand.is_blackjack
+    assert len(left_right.hand.cards) == 2 and left_right.hand.total == 16 and left_right.hand.is_soft
+    assert len(right.hand.cards) == 2 and right.hand.total == 17 and right.hand.is_soft
+    # 21 beats dealer's 18 at 1:1; the two soft hands (16, 17) both lose to 18.
+    assert result.payouts == [10.0, -10.0, -10.0]
+
+
+def test_resplit_aces_not_offered_by_default_even_on_another_ace():
+    # Same deal as above, but resplit_aces stays at its default False -- the left
+    # hand's second ace must NOT trigger a further split, matching pre-fix behaviour.
+    shoe = ScriptedShoe(["A", "9", "A", "9", "A", "6"])
+    result = play_round(shoe, RuleSet(), bet=10, decide_fn=_always(Action.SPLIT))
+
+    assert len(result.player_hands) == 2
+    left, right = result.player_hands
+    assert len(left.hand.cards) == 2 and left.hand.total == 12 and left.hand.is_soft  # A,A -- untouched
+    assert len(right.hand.cards) == 2 and right.hand.total == 17 and right.hand.is_soft
+
+
 # --- Surrender returns exactly half -------------------------------------------------
 
 def test_surrender_returns_exactly_half_the_bet():

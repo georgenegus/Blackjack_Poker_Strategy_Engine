@@ -136,8 +136,19 @@ def ev_split_hand(
         total, is_soft = advance_total(t1, s1, r2)
 
         if is_aces and not rules.hit_split_aces:
-            # The one card split aces receive was this r2 draw; no further action.
-            branch_ev = ev_stand(total, upcard, new_comp, rules)
+            # The one card split aces receive was this r2 draw. Normally no further
+            # action -- UNLESS r2 is itself another ace and resplit_aces is allowed,
+            # in which case RESPLITTING (only, not hitting) is still offered.
+            # "Resplit aces" and "hit split aces" are independent casino rule
+            # toggles in standard terminology, not one gating the other.
+            can_resplit_aces = r2 == split_rank and rules.resplit_aces and hands_so_far < rules.resplit_to
+            if can_resplit_aces:
+                branch_ev = max(
+                    ev_stand(total, upcard, new_comp, rules),
+                    2.0 * ev_split_hand(split_rank, upcard, new_comp, rules, hands_so_far + 1, is_aces),
+                )
+            else:
+                branch_ev = ev_stand(total, upcard, new_comp, rules)
         else:
             candidates: List[float] = [
                 ev_stand(total, upcard, new_comp, rules),

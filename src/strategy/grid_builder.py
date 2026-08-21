@@ -33,6 +33,8 @@ from typing import Dict, Optional, Tuple
 from src.engine.cards import RANK_INDEX, advance_total
 from src.engine.rules import RuleSet, double_allowed
 from src.engine.shoe import Shoe
+from src.strategy import dealer_probs
+from src.strategy import ev_solver as ev_solver_module
 from src.strategy.ev_solver import ev_double, ev_hit, ev_split, ev_stand, ev_surrender
 from src.utils.cache_manager import load_or_compute, source_hash
 
@@ -225,13 +227,45 @@ def _grid_from_json(data: Dict[str, Dict[str, dict]]) -> Dict[str, Dict[str, Cel
     return {section: {key: CellResult(**cell) for key, cell in cells.items()} for section, cells in data.items()}
 
 
+_in_memory_grid_cache: Dict[Tuple[RuleSet, str], Dict[str, Dict[str, CellResult]]] = {}
+_cached_solver_hash: Optional[str] = None
+
+
 def solve_grid_cached(rules: RuleSet, cache_dir: Path = DEFAULT_CACHE_DIR) -> Dict[str, Dict[str, CellResult]]:
     """solve_grid(rules), transparently cached to cache_dir/{rules.key()}.json via
-    src/utils/cache_manager.py. Solving one ruleset's full grid is expensive (see
-    the Phase 4 tracking-table timing) -- this is the "solve once, cache to disk"
-    strategy the build plan calls for instead of re-solving on every app startup."""
+    src/utils/cache_manager.py, AND memoized in-process. Callers like
+    basic_strategy.advise() may be invoked millions of times in a single
+    simulation run (Phase 5's house-edge check, Phase 8's Monte Carlo battery)
+    -- re-reading and re-parsing the ~90KB JSON file on every call would
+    dominate runtime. The disk cache still protects across process runs; this
+    only avoids redundant work within one."""
+    global _cached_solver_hash
+    mem_key = (rules, str(cache_dir))
+    cached = _in_memory_grid_cache.get(mem_key)
+    if cached is not None:
+        return cached
+
+    if _cached_solver_hash is None:
+        _cached_solver_hash = source_hash(*_SOLVER_SOURCE_FILES)
+
     cache_path = cache_dir / f"{rules.key()}.json"
-    h = source_hash(*_SOLVER_SOURCE_FILES)
     cache_key = {"ruleset_key": rules.key()}
-    data = load_or_compute(cache_path, h, cache_key, lambda: _grid_to_json(solve_grid(rules)))
-    return _grid_from_json(data)
+
+    def _compute():
+        json_data = _grid_to_json(solve_grid(rules))
+        # The raw per-cell recursion memos in dealer_probs.py/ev_solver.py are only
+        # useful WITHIN one ruleset's solve -- they barely share entries across
+        # different RuleSets (ev_hit/ev_split key on the whole RuleSet; dealer_probs
+        # keys on dealer_hits_soft_17 but comps differ by deck count) -- and grow
+        # unbounded if left across many solves in one process. Pre-solving all 32
+        # shipped rulesets in one run of scripts/build_all_grids.py hit a
+        # MemoryError on the 7.7GB dev machine partway through without this.
+        dealer_probs._recurse_memo.clear()
+        ev_solver_module._ev_hit_memo.clear()
+        ev_solver_module._ev_split_memo.clear()
+        return json_data
+
+    data = load_or_compute(cache_path, _cached_solver_hash, cache_key, _compute)
+    grid = _grid_from_json(data)
+    _in_memory_grid_cache[mem_key] = grid
+    return grid

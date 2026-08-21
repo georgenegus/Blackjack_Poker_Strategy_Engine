@@ -11,15 +11,17 @@ never parsed to make the decision.
 """
 
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, FrozenSet
 
 from src.engine.cards import Card, HARD_VALUE
 from src.engine.game import Action
 from src.engine.hand import Hand
 from src.engine.rules import RuleSet
+from src.engine.shoe import Shoe
 from src.strategy.grid_builder import PAIR_RANKS, solve_grid_cached
 
 _ACTION_FOR_KEY = {"S": Action.STAND, "H": Action.HIT, "D": Action.DOUBLE, "R": Action.SURRENDER, "P": Action.SPLIT}
+_KEY_FOR_ACTION = {v: k for k, v in _ACTION_FOR_KEY.items()}
 
 
 @dataclass
@@ -74,3 +76,22 @@ def advise(hand: Hand, upcard: Card, rules: RuleSet) -> Advice:
         margin=cell.margin,
         is_first_action=first_action,
     )
+
+
+def strategy_decide_fn(hand: Hand, upcard: Card, shoe: Shoe, rules: RuleSet, legal: FrozenSet[Action]) -> Action:
+    """A game.py-compatible decide_fn (see game.py's DecideFn) that plays basic
+    strategy. advise() alone can recommend an action that's illegal in the
+    ACTUAL round (e.g. SPLIT after resplit_to hands already exist -- Hand
+    carries only its own first-action/from_split state, not the round-wide
+    split count game.py tracks internally) -- when that happens, this falls
+    back to the best-EV action among what `legal` (computed by game.py itself)
+    actually allows, using the same cell.ev_by_action the primary advice came
+    from rather than guessing again from scratch.
+    """
+    advice = advise(hand, upcard, rules)
+    if advice.action in legal:
+        return advice.action
+    candidates = {
+        a: advice.ev_by_action[_KEY_FOR_ACTION[a]] for a in legal if _KEY_FOR_ACTION[a] in advice.ev_by_action
+    }
+    return max(candidates, key=candidates.get)

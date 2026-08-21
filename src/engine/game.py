@@ -6,7 +6,7 @@ human via the UI. See .agents/skills/blackjack_rules_conventions/SKILL.md.
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Callable, List, Optional
+from typing import Callable, FrozenSet, List, Optional
 
 from src.engine.cards import Card
 from src.engine.dealer import play_dealer
@@ -23,7 +23,14 @@ class Action(Enum):
     SURRENDER = auto()
 
 
-DecideFn = Callable[[Hand, Card, Shoe, RuleSet], Action]
+DecideFn = Callable[[Hand, Card, Shoe, RuleSet, FrozenSet[Action]], Action]
+"""(player_hand, dealer_up, shoe, rules, legal_actions) -> Action. `legal_actions`
+is the exact set game.py itself computed for this decision point -- e.g. it
+already accounts for resplit_to and DAS, which a strategy function like
+basic_strategy.advise() cannot know from the Hand alone (it only knows this
+one hand's own first-action/from_split state, not the round-wide split
+count). A decide_fn is expected to return something IN this set; returning
+anything else raises, rather than being silently downgraded."""
 InsuranceFn = Callable[[Hand, Card, Shoe, RuleSet], bool]
 
 
@@ -113,7 +120,7 @@ def _play_one_hand(
         if can_surrender:
             legal.add(Action.SURRENDER)
 
-        action = decide_fn(hand, dealer_up, shoe, rules)
+        action = decide_fn(hand, dealer_up, shoe, rules, frozenset(legal))
         if action not in legal:
             raise ValueError(f"Illegal action {action!r} for {hand!r} (legal: {legal})")
 

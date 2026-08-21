@@ -25,10 +25,10 @@ class ScriptedShoe:
 
 
 def _always(action: Action):
-    return lambda hand, dealer_up, shoe, rules: action
+    return lambda hand, dealer_up, shoe, rules, legal: action
 
 
-def _no_decide(hand, dealer_up, shoe, rules):
+def _no_decide(hand, dealer_up, shoe, rules, legal):
     raise AssertionError("decide_fn should not be called when the round settles before player action")
 
 

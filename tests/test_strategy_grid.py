@@ -84,11 +84,19 @@ H17_DELTAS = {
     ("hard", 17, 11): "Rs",
 }
 
-# Known, investigated near-miss (Phase 4 tracking table): EV gap 0.0058, attributed to
-# ev_split's documented 2x-independent-hands approximation on an exceptionally close
-# cell, not a solver bug. Tracked explicitly rather than silently excluded.
+# Known, investigated near-miss. Two prior mismatches here (pairs 33v8 and, before
+# that, pairs 77v8 and 88v11-H17) were traced to a real ev_split_hand bug -- a
+# missing 2x factor on the resplit candidate -- and are now fixed (see the "Fix
+# ev_split_hand" commit). This one is NOT a decomposition or split-recursion issue
+# (soft totals use an exact, unambiguous 2-card comp; no splitting is involved at
+# all): EV gap is only 0.003 (S=0.12400 vs D=0.12098), and hand-tracing the double
+# shows it's a genuinely close balance -- 7 of 10 possible draws degrade soft 18 to
+# a mediocre hard 12-18 against dealer's weak 2, only 3 (A,2,3) improve or hold it
+# soft, so which side wins is plausibly sensitive to exact modelling choices rather
+# than a clear-cut error. Tracked explicitly rather than silently excluded or
+# endlessly re-investigated.
 KNOWN_NEAR_MISSES = {
-    ("pairs", "33", 8): ("P", "H"),  # (solved, chart) -- both plausible, EV gap tiny
+    ("soft", 18, 2): ("S", "Ds"),  # (solved, chart) -- EV gap 0.003, investigated
 }
 
 

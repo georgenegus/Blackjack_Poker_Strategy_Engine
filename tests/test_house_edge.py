@@ -20,8 +20,15 @@ Usage (matches the build plan's example invocation):
 
 import argparse
 import json
+import os
+import sys
 import time
 from pathlib import Path
+
+# Needed when run as a direct script (py tests/test_house_edge.py ...) -- Python
+# only puts the invoked script's own directory on sys.path, not the project root.
+# Harmless (and unnecessary but not incorrect) when pytest imports this module instead.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.engine.rules import RuleSet
 from src.simulation.simulator import simulate_house_edge

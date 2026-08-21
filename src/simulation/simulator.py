@@ -21,20 +21,39 @@ from src.engine.shoe import Shoe
 
 
 def simulate_house_edge(
-    rules: RuleSet, decide_fn, n_hands: int, bet: float = 1.0, insurance_fn=None, rng: Optional[np.random.Generator] = None
+    rules: RuleSet,
+    decide_fn,
+    n_hands: int,
+    bet: float = 1.0,
+    insurance_fn=None,
+    rng: Optional[np.random.Generator] = None,
+    fresh_shoe_per_hand: bool = False,
 ):
-    """Plays n_hands rounds (reshuffling at the cut card), each staking `bet`.
-    Returns (mean, stderr) of total per-round result / bet -- the standard
-    "house edge" convention: expected result as a fraction of the ORIGINAL
-    bet, not of the total amount put at risk after doubles/splits increase it.
-    A negative mean is a player disadvantage (positive house edge).
+    """Plays n_hands rounds, each staking `bet`. Returns (mean, stderr) of total
+    per-round result / bet -- the standard "house edge" convention: expected
+    result as a fraction of the ORIGINAL bet, not of the total amount put at
+    risk after doubles/splits increase it. A negative mean is a player
+    disadvantage (positive house edge).
+
+    fresh_shoe_per_hand=False (default) reshuffles only at the cut card --
+    realistic table play, what Phase 8's penetration/count-dependent edge
+    work needs. fresh_shoe_per_hand=True reshuffles before EVERY hand, which
+    is what published "house edge" figures conventionally assume (no
+    depletion/counting effects at all -- that asymmetry is precisely what
+    card counting exploits, and is out of scope for a basic-strategy check).
+    Confirmed empirically: at realistic penetration, 2-deck and 4-deck both
+    showed a real, multi-standard-error-significant bias toward the house
+    (2D: simulated 0.259% vs published 0.190%, over 3 SE at n=30M; the bias
+    shrank with more decks, exactly as expected for a penetration-driven
+    effect diluting across a larger shoe) -- not a solver bug, but a mismatch
+    between what was being measured and what the anchor represents.
     """
     rng = rng if rng is not None else np.random.default_rng()
     shoe = Shoe(rules.num_decks, rules.penetration, rng=rng)
     results = np.empty(n_hands, dtype=np.float64)
 
     for i in range(n_hands):
-        if shoe.cut_card_reached:
+        if fresh_shoe_per_hand or shoe.cut_card_reached:
             shoe.reset()
         outcome = play_round(shoe, rules, bet, decide_fn, insurance_fn)
         total = sum(outcome.payouts)

@@ -5,9 +5,14 @@ INDEPENDENT check on Check 1: a bug in game.py's payout logic would corrupt
 this number even though ev_solver.py/grid_builder.py are never touched by it.
 See src/simulation/simulator.py's module docstring.
 
-Anchors are for S17, DAS, double-any-two, NO surrender, 3:2, dealer peeks,
-75% penetration -- i.e. RuleSet(num_decks=d, surrender="none"), matching the
-build plan's Appendix/Phase 5 anchor table exactly.
+Anchors are for S17, DAS, double-any-two, NO surrender, 3:2, dealer peeks --
+i.e. RuleSet(num_decks=d, surrender="none"), matching the build plan's
+Appendix/Phase 5 anchor table exactly. Simulated with fresh_shoe_per_hand=True:
+published house-edge figures assume no depletion/counting effects (that
+asymmetry is what card counting exploits, out of scope here), and realistic
+penetration measurably biases the result high -- confirmed empirically at
+n=30M (2D: 0.259% vs published 0.190%, over 3 standard errors) before this
+was understood; see simulate_house_edge's docstring.
 
 Every simulated figure carries its own Monte Carlo standard error and is
 reported with it -- never as a bare point estimate (see .agents/coding-
@@ -54,7 +59,7 @@ def ruleset_for_decks(decks: int) -> RuleSet:
 def run_check(decks: int, n_hands: int) -> dict:
     rules = ruleset_for_decks(decks)
     t0 = time.perf_counter()
-    mean, se = simulate_house_edge(rules, strategy_decide_fn, n_hands=n_hands, bet=1.0)
+    mean, se = simulate_house_edge(rules, strategy_decide_fn, n_hands=n_hands, bet=1.0, fresh_shoe_per_hand=True)
     elapsed = time.perf_counter() - t0
     edge = -mean
     anchor = PUBLISHED_HOUSE_EDGE[decks]

@@ -151,8 +151,12 @@ def ev_split_hand(
                 and not (is_aces and not rules.resplit_aces)
             )
             if can_resplit:
+                # Resplitting turns THIS one hand (1 unit, the scale every other
+                # candidate here is on) into two new hands -- the same 2x the
+                # top-level ev_split() applies to the original pair, just recursed.
+                # Omitting this factor undervalues every resplit opportunity by half.
                 candidates.append(
-                    ev_split_hand(split_rank, upcard, new_comp, rules, hands_so_far + 1, is_aces)
+                    2.0 * ev_split_hand(split_rank, upcard, new_comp, rules, hands_so_far + 1, is_aces)
                 )
             branch_ev = max(candidates)
 

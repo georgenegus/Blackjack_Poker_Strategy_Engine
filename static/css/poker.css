@@ -1,0 +1,284 @@
+/* ==========================================================================
+   DESIGN SYSTEM VARIABLES -- same glassmorphism dark mode as the blackjack
+   app's static/css/style.css (per .agents/skills/web_app_development/
+   SKILL.md), duplicated rather than shared: Phase 13's own scope note is
+   that poker gets its own entry point precisely so neither app's bundle
+   grows a dependency on the other's files.
+   ========================================================================== */
+:root {
+    --bg-color: #060907;
+    --card-bg: rgba(13, 20, 16, 0.72);
+    --card-border: rgba(255, 255, 255, 0.07);
+
+    --text-primary: #f7faf8;
+    --text-secondary: #9db3a5;
+    --text-muted: #7a8f82;
+
+    --primary-grad: linear-gradient(135deg, #1de9a0 0%, #0dbf7e 100%);
+    --secondary-grad: linear-gradient(135deg, #f5b942 0%, #e08e1f 100%);
+    --danger-grad: linear-gradient(135deg, #f43f5e 0%, #c0263f 100%);
+
+    --primary: #1de9a0;
+    --secondary: #f5b942;
+    --danger: #f43f5e;
+    --info: #4fa8fe;
+
+    --glow-shadow: 0 0 20px rgba(29, 233, 160, 0.28);
+    --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+
+    --font-stack: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --header-width: 226px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+}
+
+.glass-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
+.glass-bg::before, .glass-bg::after {
+    content: ''; position: absolute; width: 520px; height: 520px;
+    border-radius: 50%; filter: blur(150px); opacity: 0.14; pointer-events: none;
+}
+.glass-bg::before { background: #1de9a0; top: -12%; right: -8%; animation: float-slow 22s infinite alternate; }
+.glass-bg::after { background: #f5b942; bottom: -12%; left: -8%; animation: float-slow 26s infinite alternate-reverse; }
+@keyframes float-slow { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(70px,50px) scale(1.1); } }
+
+/* ==========================================================================
+   LAYOUT (identical structure to the blackjack app)
+   ========================================================================== */
+.app-container { display: flex; width: 100%; min-height: 100vh; }
+
+.app-header {
+    width: var(--header-width);
+    background: rgba(9, 14, 11, 0.88);
+    border-right: 1px solid var(--card-border);
+    backdrop-filter: blur(20px);
+    display: flex; flex-direction: column;
+    padding: 36px 22px;
+    position: fixed; height: 100vh; z-index: 10;
+    overflow-y: auto;
+}
+
+.brand { margin-bottom: 30px; }
+.brand-icon-svg { width: 2.1rem; height: 2.1rem; margin-bottom: 8px; filter: drop-shadow(0 0 8px rgba(29,233,160,0.5)); }
+.brand h1 {
+    font-size: 1.42rem; font-weight: 800; letter-spacing: -0.4px;
+    background: var(--primary-grad); -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.brand-tag { display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; }
+
+.nav-tabs { display: flex; flex-direction: column; gap: 6px; margin-bottom: 26px; }
+.tab-btn {
+    background: transparent; border: none; outline: none; color: var(--text-secondary);
+    font-family: var(--font-stack); font-size: 0.94rem; font-weight: 500; text-align: left;
+    padding: 11px 16px; border-radius: 12px; cursor: pointer;
+    transition: all 0.25s ease; position: relative;
+}
+.tab-btn::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 4px; height: 0; background: var(--primary); border-radius: 4px; transition: height 0.25s ease;
+}
+.tab-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+.tab-btn.active { color: var(--text-primary); background: rgba(29,233,160,0.09); font-weight: 600; }
+.tab-btn.active::before { height: 22px; }
+
+.header-footer { margin-top: auto; font-size: 0.68rem; color: var(--text-muted); line-height: 1.5; padding-top: 16px; border-top: 1px solid var(--card-border); }
+
+.app-main {
+    margin-left: var(--header-width);
+    width: calc(100% - var(--header-width));
+    max-width: calc(100% - var(--header-width));
+    padding: 22px 26px 60px;
+    min-height: 100vh;
+}
+
+.tab-content { display: none; animation: fade-in 0.35s ease-out; }
+.tab-content.active { display: block; }
+@keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ==========================================================================
+   CARDS & CONTROLS (identical vocabulary to the blackjack app)
+   ========================================================================== */
+.glass-card {
+    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 18px;
+    padding: 20px 22px; box-shadow: var(--card-shadow); backdrop-filter: blur(16px);
+    transition: border-color 0.3s ease; margin-bottom: 20px;
+}
+.glass-card:hover { border-color: rgba(29,233,160,0.14); }
+.card-header { margin-bottom: 18px; }
+.card-header h2 { font-size: 1.28rem; font-weight: 700; margin-bottom: 3px; }
+.card-header p { color: var(--text-secondary); font-size: 0.87rem; }
+
+.grid-2 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 20px; align-items: start; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+.stack { display: flex; flex-direction: column; gap: 18px; }
+
+select, input[type=number], input[type=text] {
+    width: 100%; background: rgba(255,255,255,0.045); border: 1px solid var(--card-border);
+    color: var(--text-primary); padding: 9px 13px; border-radius: 11px;
+    font-family: var(--font-stack); font-size: 0.9rem; transition: all 0.25s ease;
+}
+select:focus, input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 10px rgba(29,233,160,0.16); }
+select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239db3a5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 13px; padding-right: 34px; }
+select option { background-color: #0b120e; color: #f7faf8; }
+
+.glow-btn {
+    background: var(--primary-grad); color: #04140c; border: none; outline: none;
+    font-family: var(--font-stack); font-size: 0.9rem; font-weight: 700;
+    padding: 10px 18px; border-radius: 12px; cursor: pointer; box-shadow: var(--glow-shadow);
+    transition: all 0.25s ease;
+}
+.glow-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 0 24px rgba(29,233,160,0.5); }
+.glow-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+.btn-alt { background: var(--secondary-grad); color: #241300; box-shadow: 0 0 20px rgba(245,185,66,0.28); }
+.btn-danger { background: var(--danger-grad); color: #1a0509; box-shadow: 0 0 20px rgba(244,63,94,0.28); }
+.btn-ghost { background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--card-border); box-shadow: none; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+
+.form-group { display: flex; flex-direction: column; gap: 5px; min-width: 0; margin-bottom: 12px; }
+.form-group label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+.slider-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.slider-header { display: flex; justify-content: space-between; font-size: 0.86rem; font-weight: 600; }
+.slider-header .val { color: var(--primary); font-variant-numeric: tabular-nums; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: var(--primary); margin-top: -6px; box-shadow: 0 0 10px rgba(29,233,160,0.5); cursor: pointer; }
+
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-top: 10px; }
+.metric-card { background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); padding: 12px 14px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.metric-title { font-size: 0.66rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.metric-value { font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.metric-sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+.metric-value.pos { color: var(--primary); }
+.metric-value.neg { color: var(--danger); }
+
+.status-line { font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px; min-height: 1.2em; }
+.status-line.error { color: var(--danger); }
+.status-line.ok { color: var(--primary); }
+
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+.badge.exact { background: rgba(29,233,160,0.12); color: var(--primary); border: 1px solid rgba(29,233,160,0.3); }
+.badge.sampled { background: rgba(245,185,66,0.14); color: var(--secondary); border: 1px solid rgba(245,185,66,0.35); }
+
+.warning-banner {
+    background: rgba(245,185,66,0.1); border: 1px solid rgba(245,185,66,0.35); color: #f5b942;
+    border-radius: 12px; padding: 11px 15px; font-size: 0.82rem; margin-bottom: 16px; line-height: 1.5;
+}
+.warning-banner.danger { background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.35); color: #f43f5e; }
+.warning-banner b { color: inherit; }
+
+/* ==========================================================================
+   169-HAND GRID (Ranges / Preflop tabs)
+   ========================================================================== */
+.hand-grid {
+    display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 2px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 10px;
+    padding: 6px; user-select: none;
+}
+.hand-cell {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    font-size: 0.62rem; font-weight: 700; border-radius: 3px; cursor: pointer;
+    background: rgba(255,255,255,0.04); color: var(--text-secondary);
+    position: relative; overflow: hidden; transition: transform 0.1s ease;
+}
+.hand-cell:hover { transform: scale(1.08); z-index: 2; box-shadow: 0 0 8px rgba(0,0,0,0.5); }
+.hand-cell.pair { background: rgba(255,255,255,0.07); }
+.hand-cell .fill {
+    position: absolute; inset: 0; background: var(--primary-grad); opacity: 0.85;
+    /* width set inline per-cell to reflect combo weight / selected action frequency */
+}
+.hand-cell .label { position: relative; z-index: 1; mix-blend-mode: difference; color: #fff; }
+.hand-cell.selected { outline: 2px solid var(--primary); }
+
+/* Split cells: a mixed-strategy hand renders as a horizontal stack of
+   proportionally-widthed action segments, NEVER collapsed to the most
+   frequent action alone -- Phase 13's own [!NOTE], the single most
+   important UI decision in this plan. */
+.hand-cell .split { position: absolute; inset: 0; display: flex; }
+.hand-cell .split .seg { height: 100%; }
+.seg-raise, .seg-bet { background: var(--danger-grad); }
+.seg-call { background: var(--primary-grad); }
+.seg-check { background: rgba(79,168,254,0.55); }
+.seg-fold { background: rgba(255,255,255,0.08); }
+
+.grid-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.legend-chip { display: flex; align-items: center; gap: 6px; font-size: 0.76rem; color: var(--text-secondary); }
+.legend-swatch { width: 14px; height: 14px; border-radius: 4px; }
+
+/* ==========================================================================
+   HISTOGRAMS / CURVES (Equity, Solver tabs) -- plain div bars, no chart lib,
+   matching the rest of the app's "vanilla JS, no framework" convention.
+   ========================================================================== */
+.bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 140px; margin-top: 14px; }
+.bar-chart .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+.bar-chart .bar { width: 100%; border-radius: 4px 4px 0 0; background: var(--primary-grad); min-height: 2px; transition: height 0.4s ease; }
+.bar-chart .bar-label { font-size: 0.62rem; color: var(--text-muted); }
+.bar-chart .bar-val { font-size: 0.6rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+.curve-chart { position: relative; height: 160px; margin-top: 14px; border-bottom: 1px solid var(--card-border); border-left: 1px solid var(--card-border); }
+.curve-chart .point {
+    position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--primary);
+    box-shadow: 0 0 8px rgba(29,233,160,0.6); transform: translate(-50%, 50%);
+}
+.curve-chart .seg { position: absolute; height: 2px; background: rgba(29,233,160,0.4); transform-origin: 0 50%; }
+.curve-chart .axis-label { position: absolute; font-size: 0.62rem; color: var(--text-muted); }
+
+/* ==========================================================================
+   PLAYING CARDS (Trainer tab)
+   ========================================================================== */
+.playing-card {
+    width: 52px; height: 74px; border-radius: 8px; background: #f7faf8; color: #14181a;
+    display: flex; flex-direction: column; justify-content: space-between; padding: 5px 6px;
+    font-weight: 800; font-size: 1.05rem; box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+.playing-card.red { color: #c0263f; }
+.playing-card .pc-bottom { align-self: flex-end; transform: rotate(180deg); }
+.cards-row { display: flex; gap: 8px; }
+
+.trainer-score { font-size: 2.2rem; font-weight: 800; }
+.trainer-history { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.trainer-chip { width: 10px; height: 10px; border-radius: 50%; }
+.trainer-chip.good { background: var(--primary); }
+.trainer-chip.bad { background: var(--danger); }
+
+/* ==========================================================================
+   TOASTS + RESPONSIVE (identical to the blackjack app)
+   ========================================================================== */
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+.toast {
+    background: rgba(13,20,16,0.95); border: 1px solid var(--card-border); border-left: 3px solid var(--primary);
+    border-radius: 10px; padding: 12px 16px; font-size: 0.85rem; box-shadow: var(--card-shadow);
+    animation: fade-in 0.25s ease-out; max-width: 320px;
+}
+.toast.error { border-left-color: var(--danger); }
+
+@media (max-width: 900px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    body { flex-direction: column; }
+    .app-header { width: 100%; height: auto; position: relative; padding: 20px; }
+    .nav-tabs { flex-direction: row; overflow-x: auto; }
+    .tab-btn { white-space: nowrap; }
+    .tab-btn::before { display: none; }
+    .app-main { margin-left: 0; width: 100%; max-width: 100%; padding: 18px; }
+    .form-row, .form-row-3 { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+a:focus-visible, button:focus-visible, select:focus-visible {
+    outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px;
+}

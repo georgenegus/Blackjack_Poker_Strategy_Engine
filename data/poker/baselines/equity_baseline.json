@@ -1,0 +1,53 @@
+{
+  "anchors": [
+    {
+      "hero": "AsAh",
+      "villain": "KsKh",
+      "board": [],
+      "hero_equity": 0.82636611
+    },
+    {
+      "hero": "AsAh",
+      "villain": "KsKd",
+      "board": [],
+      "hero_equity": 0.8194605
+    },
+    {
+      "hero": "AsAh",
+      "villain": "KdKc",
+      "board": [],
+      "hero_equity": 0.8125549
+    },
+    {
+      "hero": "AsAh",
+      "villain": "7s2d",
+      "board": [],
+      "hero_equity": 0.8820557
+    },
+    {
+      "hero": "AsKs",
+      "villain": "QhQd",
+      "board": [],
+      "hero_equity": 0.46214457
+    },
+    {
+      "hero": "AsKs",
+      "villain": "QsQd",
+      "board": [],
+      "hero_equity": 0.45882594
+    },
+    {
+      "hero": "AsKd",
+      "villain": "QhQc",
+      "board": [],
+      "hero_equity": 0.42835151
+    },
+    {
+      "hero": "AsKd",
+      "villain": "2h2c",
+      "board": [],
+      "hero_equity": 0.46959652
+    }
+  ],
+  "locked_by": "Phase 5 Check 5, tests/poker/test_equity.py"
+}

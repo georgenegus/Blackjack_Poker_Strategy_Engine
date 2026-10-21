@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Solver</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/poker.css">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="toast-container" id="toast-container"></div>
+
+    <div class="app-container">
+        <header class="app-header">
+            <div class="brand">
+                <svg class="brand-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="brand-icon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#1de9a0"/>
+                            <stop offset="100%" stop-color="#f5b942"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="none" stroke="url(#brand-icon-grad)" stroke-width="1.6"/>
+                    <text x="12" y="15.5" text-anchor="middle" font-size="9" font-weight="800" fill="url(#brand-icon-grad)">P</text>
+                </svg>
+                <h1>Poker Solver</h1>
+                <span class="brand-tag">Equilibrium, Not Intuition</span>
+            </div>
+            <nav class="nav-tabs" role="tablist" aria-label="Main sections">
+                <button class="tab-btn active" id="tab-btn-equity" data-tab="equity" role="tab" aria-selected="true">Equity</button>
+                <button class="tab-btn" id="tab-btn-ranges" data-tab="ranges" role="tab" aria-selected="false">Ranges</button>
+                <button class="tab-btn" id="tab-btn-preflop" data-tab="preflop" role="tab" aria-selected="false">Preflop</button>
+                <button class="tab-btn" id="tab-btn-pushfold" data-tab="pushfold" role="tab" aria-selected="false">Push/Fold &amp; ICM</button>
+                <button class="tab-btn" id="tab-btn-solver" data-tab="solver" role="tab" aria-selected="false">Solver</button>
+                <button class="tab-btn" id="tab-btn-bankroll" data-tab="bankroll" role="tab" aria-selected="false">Bankroll</button>
+                <button class="tab-btn" id="tab-btn-trainer" data-tab="trainer" role="tab" aria-selected="false">Trainer</button>
+            </nav>
+            <div class="header-footer">
+                Every strategy shown is an equilibrium of an abstracted game -- see the notice at the top of each solved tab.
+            </div>
+        </header>
+
+        <main class="app-main">
+            <div class="warning-banner danger">
+                <b>Study tool only.</b> Using a solver or any real-time assistance <b>during</b> play violates the terms of
+                service of essentially every online poker site and is grounds for account closure and fund confiscation.
+                Every strategy here is an equilibrium of an <b>abstracted</b> game -- its exploitability figure is measured
+                inside that abstraction, not at a real table. Poker's edges are small relative to variance: results over
+                any humanly-perceptible sample are dominated by noise, not skill. See the Bankroll tab for exactly how much.
+            </div>
+
+            <!-- ============================= EQUITY TAB ============================= -->
+            <section class="tab-content active" id="tab-equity" role="tabpanel">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Equity</h2>
+                            <p>Hand vs hand, or range vs range, on any board.</p>
+                        </div>
+                        <div class="form-row" style="margin-bottom:12px;">
+                            <button class="btn-ghost glow-btn" id="eq-mode-hands" data-mode="hands">Hand vs Hand</button>
+                            <button class="btn-ghost glow-btn" id="eq-mode-ranges" data-mode="ranges">Range vs Range</button>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="eq-a">Hero</label>
+                                <input type="text" id="eq-a" placeholder="AsAh or AA">
+                            </div>
+                            <div class="form-group">
+                                <label for="eq-b">Villain</label>
+                                <input type="text" id="eq-b" placeholder="KsKh or KK">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="eq-board">Board (0/3/4/5 cards)</label>
+                            <input type="text" id="eq-board" placeholder="e.g. AsKd7h">
+                        </div>
+                        <div class="btn-row">
+                            <button class="glow-btn" id="eq-run">Compute Equity</button>
+                        </div>
+                        <div class="status-line" id="eq-status"></div>
+                    </div>
+
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Result</h2>
+                            <span class="badge" id="eq-badge" style="display:none;"></span>
+                        </div>
+                        <div class="metrics-grid" id="eq-metrics"></div>
+                        <div id="eq-hist-wrap" style="display:none;">
+                            <div class="card-header" style="margin-top:16px;margin-bottom:6px;">
+                                <h2 style="font-size:1rem;">Equity Distribution</h2>
+                                <p>Win / tie / lose shares across every possible runout -- not just the mean.</p>
+                            </div>
+                            <div class="bar-chart" id="eq-hist"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================= RANGES TAB ============================= -->
+            <section class="tab-content" id="tab-ranges" role="tabpanel">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Range Editor</h2>
+                            <p>Click a cell to toggle it, drag to select a block. Right-click a selected cell to set its weight.</p>
+                        </div>
+                        <div class="grid-legend">
+                            <span class="legend-chip"><span class="legend-swatch" style="background:var(--primary-grad);"></span>Selected</span>
+                            <span class="legend-chip"><span class="legend-swatch" style="background:rgba(255,255,255,0.07);"></span>Pair</span>
+                        </div>
+                        <div class="hand-grid" id="range-grid"></div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Notation</h2>
+                            <p>Synced both ways with the grid.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="range-notation">Range notation</label>
+                            <input type="text" id="range-notation" placeholder="e.g. QQ+,AKs,AJo+">
+                        </div>
+                        <div class="btn-row">
+                            <button class="glow-btn" id="range-apply">Apply Notation &rarr; Grid</button>
+                            <button class="btn-ghost glow-btn" id="range-clear">Clear</button>
+                        </div>
+                        <div class="metrics-grid" style="margin-top:16px;">
+                            <div class="metric-card">
+                                <div class="metric-title">Combos</div>
+                                <div class="metric-value" id="range-combos">0</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-title">% of Hands</div>
+                                <div class="metric-value" id="range-pct">0%</div>
+                            </div>
+                        </div>
+                        <div class="status-line" id="range-status"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================= PREFLOP TAB ============================= -->
+            <section class="tab-content" id="tab-preflop" role="tabpanel">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h2>Solved Preflop Strategy</h2>
+                        <p>Mixed cells render as split cells with their real frequencies -- never collapsed to the most-frequent action alone.</p>
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="pf-spec">Spec</label>
+                            <select id="pf-spec"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pf-position">Position</label>
+                            <select id="pf-position">
+                                <option value="BTN">BTN (SB)</option>
+                                <option value="BB">BB</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pf-simplify">View</label>
+                            <select id="pf-simplify">
+                                <option value="mixed">Mixed (real frequencies)</option>
+                                <option value="simplified">Simplified (pure actions)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="warning-banner" id="pf-warning"></div>
+                    <div class="grid-legend" id="pf-legend"></div>
+                    <div class="hand-grid" id="pf-grid"></div>
+                    <div class="status-line" id="pf-status"></div>
+                </div>
+            </section>
+
+            <!-- ============================= PUSH/FOLD & ICM TAB ============================= -->
+            <section class="tab-content" id="tab-pushfold" role="tabpanel">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h2>Push/Fold by Effective Stack</h2>
+                        <p>Heads-up jam-or-fold equilibrium, chip-EV.</p>
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-header"><span>Effective Stack</span><span class="val" id="pfold-stack-val">15.0 bb</span></div>
+                        <input type="range" id="pfold-stack" min="0.5" max="25" step="0.5" value="15">
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric-card"><div class="metric-title">Jam %</div><div class="metric-value" id="pfold-jam-pct">--</div></div>
+                        <div class="metric-card"><div class="metric-title">Call %</div><div class="metric-value" id="pfold-call-pct">--</div></div>
+                    </div>
+                    <div class="grid-2" style="margin-top:16px;">
+                        <div>
+                            <div class="card-header"><h2 style="font-size:1rem;">Jam Range (SB)</h2></div>
+                            <div class="hand-grid" id="pfold-jam-grid"></div>
+                        </div>
+                        <div>
+                            <div class="card-header"><h2 style="font-size:1rem;">Call Range (BB)</h2></div>
+                            <div class="hand-grid" id="pfold-call-grid"></div>
+                        </div>
+                    </div>
+                    <div class="status-line" id="pfold-status"></div>
+                </div>
+
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h2>ICM Calculator</h2>
+                        <p>Malmuth-Harville tournament equity and bubble factor.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="icm-stacks">Stacks (comma-separated)</label>
+                        <input type="text" id="icm-stacks" value="5000,3000,2000">
+                    </div>
+                    <div class="form-group">
+                        <label for="icm-payouts">Payouts (comma-separated)</label>
+                        <input type="text" id="icm-payouts" value="50,30,20">
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-group"><label for="icm-player">Risking Player #</label><input type="number" id="icm-player" value="0"></div>
+                        <div class="form-group"><label for="icm-opponent">Opponent #</label><input type="number" id="icm-opponent" value="2"></div>
+                        <div class="form-group"><label for="icm-risk">Risk Amount</label><input type="number" id="icm-risk" value="1000"></div>
+                    </div>
+                    <div class="btn-row"><button class="glow-btn" id="icm-run">Compute ICM</button></div>
+                    <div class="metrics-grid" id="icm-equities"></div>
+                    <div class="status-line" id="icm-status"></div>
+                    <div class="card-header" style="margin-top:16px;margin-bottom:6px;"><h2 style="font-size:1rem;">Equity per Chip</h2><p>Makes chip devaluation visible: equity share divided by chip share, per player.</p></div>
+                    <div class="bar-chart" id="icm-per-chip"></div>
+                </div>
+            </section>
+
+            <!-- ============================= SOLVER TAB ============================= -->
+            <section class="tab-content" id="tab-solver" role="tabpanel">
+                <div class="warning-banner">
+                    Bounded solve: capped at 200,000 iterations and 30 seconds server-side, and the hero/villain range
+                    pair is rejected up front if it's too wide to solve quickly. This tab runs several independent
+                    bounded solves at increasing iteration counts and plots each one's exploitability -- a REAL trend
+                    across real solves, not one continuously-updating solve (the API is synchronous and one-shot).
+                </div>
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Configure Spot</h2>
+                            <p>River-only: with all 5 board cards fixed, every showdown has an exact value.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="solve-board">Board (5 cards)</label>
+                            <input type="text" id="solve-board" value="AsKd7h2c9s">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="solve-hero">Hero Range</label><input type="text" id="solve-hero" value="QQ+"></div>
+                            <div class="form-group"><label for="solve-villain">Villain Range</label><input type="text" id="solve-villain" value="QQ+"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="solve-pot">Pot (bb)</label><input type="number" id="solve-pot" value="10"></div>
+                            <div class="form-group"><label for="solve-stack">Stack (bb)</label><input type="number" id="solve-stack" value="20"></div>
+                        </div>
+                        <div class="btn-row"><button class="glow-btn" id="solve-run">Run Solve</button></div>
+                        <div class="status-line" id="solve-status"></div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Exploitability</h2>
+                            <p>Falling in trend = converging toward equilibrium; flat/rising = not converged yet.</p>
+                        </div>
+                        <div class="curve-chart" id="solve-curve"></div>
+                        <div class="metrics-grid" id="solve-metrics" style="margin-top:16px;"></div>
+                    </div>
+                </div>
+                <div class="glass-card">
+                    <div class="card-header"><h2>Solved Strategy</h2></div>
+                    <div id="solve-strategy-tables"></div>
+                </div>
+            </section>
+
+            <!-- ============================= BANKROLL TAB ============================= -->
+            <section class="tab-content" id="tab-bankroll" role="tabpanel">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Bankroll &amp; Variance</h2>
+                            <p>Win rate and standard deviation in bb/100 hands.</p>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="br-wr">Win Rate (bb/100)</label><input type="number" id="br-wr" value="5"></div>
+                            <div class="form-group"><label for="br-sd">Std Dev (bb/100)</label><input type="number" id="br-sd" value="100"></div>
+                        </div>
+                        <div class="form-group"><label for="br-bankroll">Bankroll (bb)</label><input type="number" id="br-bankroll" value="2000"></div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="br-hands">Sample Size (hands)</label><input type="number" id="br-hands" value="10000"></div>
+                            <div class="form-group"><label for="br-observed">Observed Win Rate (bb/100)</label><input type="number" id="br-observed" value="5"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="br-total">Total Bankroll ($)</label><input type="number" id="br-total" value="10000"></div>
+                            <div class="form-group"><label for="br-target">Target Risk of Ruin</label><input type="number" id="br-target" value="0.05" step="0.01"></div>
+                        </div>
+                        <div class="btn-row"><button class="glow-btn" id="br-run">Compute</button></div>
+                        <div class="status-line" id="br-status"></div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="card-header"><h2>Results</h2></div>
+                        <div class="metrics-grid" id="br-metrics"></div>
+                        <div class="warning-banner" id="br-ci-banner" style="display:none;"></div>
+                        <div class="card-header" style="margin-top:16px;margin-bottom:6px;"><h2 style="font-size:1rem;">Downswing Quantiles</h2><p>The depth of downswing you have a given probability of ever seeing.</p></div>
+                        <div class="bar-chart" id="br-downswing"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================= TRAINER TAB ============================= -->
+            <section class="tab-content" id="tab-trainer" role="tabpanel">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Trainer</h2>
+                            <p>Score is frequency-loss (percentage points below the solved mix), accumulated over the session -- picking a real 30% action is not an error.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="trainer-spec">Spec</label>
+                            <select id="trainer-spec"></select>
+                        </div>
+                        <div class="btn-row"><button class="glow-btn" id="trainer-deal">Deal Spot</button></div>
+                        <div id="trainer-spot" style="margin-top:16px;">
+                            <div class="cards-row" id="trainer-cards"></div>
+                            <div class="status-line" id="trainer-situation"></div>
+                        </div>
+                        <div class="btn-row" id="trainer-actions"></div>
+                        <div class="status-line" id="trainer-status"></div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="card-header"><h2>Session</h2></div>
+                        <div class="metrics-grid">
+                            <div class="metric-card"><div class="metric-title">Hands</div><div class="metric-value" id="trainer-n">0</div></div>
+                            <div class="metric-card"><div class="metric-title">Avg Frequency-Loss (pp)</div><div class="metric-value" id="trainer-avg-loss">--</div></div>
+                        </div>
+                        <div class="trainer-history" id="trainer-history"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/poker/app.js"></script>
+    <script src="js/poker/equity.js"></script>
+    <script src="js/poker/ranges.js"></script>
+    <script src="js/poker/preflop.js"></script>
+    <script src="js/poker/pushfold.js"></script>
+    <script src="js/poker/solver.js"></script>
+    <script src="js/poker/bankroll.js"></script>
+    <script src="js/poker/trainer.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "kuhn": {
+    "analytic_value": -0.05555555555555555,
+    "lp_value": -0.055555555555555525,
+    "note": "sequence-form LP matches the analytic value to machine precision (diff ~2.8e-17)"
+  },
+  "leduc": {
+    "lp_value": -0.08560642407800044,
+    "cfr_variant": "dcfr",
+    "cfr_iterations": 8000,
+    "cfr_game_value": -0.085586,
+    "game_value_diff_from_lp": 2e-05,
+    "exploitability": 0.009174,
+    "solve_wall_seconds": 744.3,
+    "note": "Game value converged well within the plan Phase 8 bar (|diff| < 1e-4). Exploitability (the stricter, worst-case metric) did NOT reach the plan's 1e-3 target within a reasonable compute budget -- extrapolating DCFR's convergence rate, closing the remaining gap needs on the order of 672,000 iterations (~17h at the measured per-iteration cost), a scale of background commitment the user was asked about and declined in favour of locking the honestly-achieved figure. CFR+ was also measured on this game and converges WORSE than DCFR here (extrapolated ~0.023 at a matched 8000 iterations vs DCFR's actual 0.00917), so it is not a faster alternative. This is a real, reported number, not a target met by construction."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "hu-100bb-r5c3-s5": {
+    "abstraction_exploitability_mbb": 2271.62427060733,
+    "abstraction_exploitability_se_mbb": 44.43253114007042,
+    "game_value_bb": 0.17721065437592637,
+    "iterations": 1000000,
+    "solver_hash": "caba5efaebf1f34fba033c04099007d2fecb97280e5f6d1b4bc0f50dc6bc6e8d"
+  },
+  "hu-10bb-r5c3-s5": {
+    "abstraction_exploitability_mbb": 482.5808695763561,
+    "abstraction_exploitability_se_mbb": 19.549649138331365,
+    "game_value_bb": -0.12029262901932627,
+    "iterations": 100000,
+    "solver_hash": "caba5efaebf1f34fba033c04099007d2fecb97280e5f6d1b4bc0f50dc6bc6e8d"
+  }
+}

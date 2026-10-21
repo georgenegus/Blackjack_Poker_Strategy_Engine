@@ -1,0 +1,29 @@
+{
+  "seven_card_category_counts": {
+    "STRAIGHT_FLUSH": 41584,
+    "FOUR_OF_A_KIND": 224848,
+    "FULL_HOUSE": 3473184,
+    "FLUSH": 4047644,
+    "STRAIGHT": 6180020,
+    "THREE_OF_A_KIND": 6461620,
+    "TWO_PAIR": 31433400,
+    "ONE_PAIR": 58627800,
+    "HIGH_CARD": 23294460
+  },
+  "seven_card_total": 133784560,
+  "five_card_category_counts": {
+    "STRAIGHT_FLUSH": 40,
+    "FOUR_OF_A_KIND": 624,
+    "FULL_HOUSE": 3744,
+    "FLUSH": 5108,
+    "STRAIGHT": 10200,
+    "THREE_OF_A_KIND": 54912,
+    "TWO_PAIR": 123552,
+    "ONE_PAIR": 1098240,
+    "HIGH_CARD": 1302540
+  },
+  "five_card_total": 2598960,
+  "distinct_five_card_values": 7462,
+  "evaluator_source_sha256": "7a109a69ec61be3b2856adc4141fa35fe4543dd4e4824159e01eb3e81aace90e",
+  "locked_by": "Phase 5 Check 1/2/3, tests/poker/test_evaluator.py"
+}

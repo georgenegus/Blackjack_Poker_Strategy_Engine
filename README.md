@@ -1,5 +1,7 @@
 # Cards — Blackjack & Hold'em Strategy Engines
 
+[![Regression Gate](https://github.com/georgenegus/Blackjack_Poker_Strategy_Engine/actions/workflows/regression.yml/badge.svg)](https://github.com/georgenegus/Blackjack_Poker_Strategy_Engine/actions/workflows/regression.yml)
+
 Two card-game strategy engines behind one Flask app. Both compute strategy from first principles and check themselves against published results; neither copies a chart.
 
 - **Blackjack.** An exact combinatorial EV solver produces basic strategy for any ruleset. Count-indexed deviations come from re-solving against count-biased shoes. Bets are sized by fractional Kelly.

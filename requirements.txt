@@ -2,3 +2,5 @@ flask
 numpy
 pandas
 pytest
+numba  # poker area: src/poker/evaluator.py's 7-card batch evaluator -- see markdowns/poker/poker_build_plan_v1.md Phase 3
+scipy  # poker area: src/poker/abstraction.py's k-means (Phase 6); also Phase 8's sequence-form LP

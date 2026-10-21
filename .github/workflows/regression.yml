@@ -1,0 +1,48 @@
+name: Regression Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit test suite
+        # Poker's own tests live under tests/poker/ and get their own job
+        # below (Phase 14 of markdowns/poker/poker_build_plan_v1.md: "two
+        # jobs means the summary line tells you which engine broke without
+        # reading a log") -- excluded here too, or a poker failure would
+        # show up inside THIS job's log and defeat that separation.
+        run: python -m pytest tests/ --ignore=tests/regression_test.py --ignore=tests/poker -q
+
+      - name: Run the fast regression gate
+        run: python tests/regression_test.py --fast
+
+  poker-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run poker unit test suite
+        run: python -m pytest tests/poker/ --ignore=tests/poker/regression_test.py -q
+
+      - name: Run the fast poker regression gate
+        run: python tests/poker/regression_test.py --fast

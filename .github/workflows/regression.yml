@@ -41,6 +41,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Build evaluator lookup tables
+        # data/poker/evaluator/ is gitignored (regenerable); the evaluator
+        # raises FileNotFoundError without it.
+        run: python scripts/poker/build_evaluator_tables.py
+
       - name: Run poker unit test suite
         run: python -m pytest tests/poker/ --ignore=tests/poker/regression_test.py -q
 

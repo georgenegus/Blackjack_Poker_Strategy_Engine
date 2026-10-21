@@ -56,7 +56,8 @@ Requires Python 3.12+ (CI runs 3.12).
 
 ```bash
 pip install -r requirements.txt
-python app.py                  # blackjack at http://127.0.0.1:5000, poker at /poker
+python scripts/poker/build_evaluator_tables.py   # one-time, ~20 s; the poker evaluator needs it
+python app.py                                    # blackjack at http://127.0.0.1:5000, poker at /poker
 ```
 
 Print a solved basic-strategy grid from the command line:
@@ -110,8 +111,8 @@ The poker engine is strictly additive. It never modifies the blackjack engine or
 ## Testing
 
 ```bash
-python tests/regression_test.py --fast           # blackjack regression gate (~1 min)
-python tests/poker/regression_test.py --fast     # poker regression gate
+python tests/regression_test.py --fast           # blackjack regression gate (~4 min)
+python tests/poker/regression_test.py --fast     # poker regression gate (~5 min)
 python -m pytest tests/ --ignore=tests/regression_test.py --ignore=tests/poker -q
 python -m pytest tests/poker/ --ignore=tests/poker/regression_test.py -q
 ```

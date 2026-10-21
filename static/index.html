@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Strategy Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="toast-container" id="toast-container"></div>
+
+    <div class="app-container">
+        <header class="app-header">
+            <div class="brand">
+                <svg class="brand-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="brand-icon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#1de9a0"/>
+                            <stop offset="100%" stop-color="#f5b942"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="none" stroke="url(#brand-icon-grad)" stroke-width="1.6"/>
+                    <text x="12" y="15.5" text-anchor="middle" font-size="9" font-weight="800" fill="url(#brand-icon-grad)">A</text>
+                </svg>
+                <h1>Blackjack Engine</h1>
+                <span class="brand-tag">Solved, Not Transcribed</span>
+            </div>
+            <nav class="nav-tabs" role="tablist" aria-label="Main sections">
+                <button class="tab-btn active" id="tab-btn-play" data-tab="play" role="tab" aria-selected="true">Play</button>
+                <button class="tab-btn" id="tab-btn-grid" data-tab="grid" role="tab" aria-selected="false">Strategy Grid</button>
+                <button class="tab-btn" id="tab-btn-counting" data-tab="counting" role="tab" aria-selected="false">Counting</button>
+                <button class="tab-btn" id="tab-btn-bankroll" data-tab="bankroll" role="tab" aria-selected="false">Bankroll</button>
+                <button class="tab-btn" id="tab-btn-simulator" data-tab="simulator" role="tab" aria-selected="false">Simulator</button>
+            </nav>
+            <div class="header-footer">
+                Every EV is a function of the ruleset selected above &mdash; solved by exact combinatorial enumeration, not a transcribed chart.
+            </div>
+        </header>
+
+        <main class="app-main">
+            <!-- Shared ruleset / system selector -->
+            <div class="rules-bar">
+                <div class="field">
+                    <label for="sel-ruleset">Ruleset</label>
+                    <select id="sel-ruleset"></select>
+                </div>
+                <div class="field">
+                    <label for="sel-system">Counting System</label>
+                    <select id="sel-system"></select>
+                </div>
+                <span class="field-note" id="rules-summary"></span>
+            </div>
+
+            <!-- ============================= PLAY TAB ============================= -->
+            <section class="tab-content active" id="tab-play" role="tabpanel">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Table</h2>
+                            <p>Deal a shoe and play against the mathematically solved advice.</p>
+                        </div>
+
+                        <div class="felt">
+                            <div class="hand-block">
+                                <div class="hand-label">Dealer <span class="hand-total" id="dealer-total"></span></div>
+                                <div class="cards-row" id="dealer-cards"></div>
+                            </div>
+                            <div class="hand-block">
+                                <div class="hand-label">Player <span class="hand-total" id="player-total"></span></div>
+                                <div class="cards-row" id="player-cards"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bet-amount">Bet</label>
+                                <input type="number" id="bet-amount" value="25" min="1" step="1">
+                            </div>
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button class="glow-btn" id="btn-deal">Deal</button>
+                            </div>
+                        </div>
+
+                        <div class="action-row" id="action-row">
+                            <button class="btn-ghost" data-action="hit" disabled>Hit</button>
+                            <button class="btn-ghost" data-action="stand" disabled>Stand</button>
+                            <button class="btn-ghost" data-action="double" disabled>Double</button>
+                            <button class="btn-ghost" data-action="split" disabled>Split</button>
+                            <button class="btn-danger" data-action="surrender" disabled>Surrender</button>
+                        </div>
+
+                        <div class="status-line" id="play-status"></div>
+
+                        <div class="metrics-grid">
+                            <div class="metric-card"><span class="metric-title">Running Count</span><span class="metric-value" id="m-rc">0</span></div>
+                            <div class="metric-card"><span class="metric-title">True Count</span><span class="metric-value" id="m-tc">&mdash;</span></div>
+                            <div class="metric-card"><span class="metric-title">Decks Left</span><span class="metric-value" id="m-decks">&mdash;</span></div>
+                        </div>
+                    </div>
+
+                    <div class="stack">
+                        <div class="glass-card">
+                            <div class="card-header"><h2>Advice</h2></div>
+                            <div id="advice-badge-wrap"></div>
+                            <div class="advice-action" id="advice-action">&mdash;</div>
+                            <div class="advice-reason" id="advice-reason">Deal a hand to see the mathematically correct decision.</div>
+                            <div class="ev-chart" id="ev-chart"></div>
+                        </div>
+
+                        <div class="glass-card">
+                            <div class="card-header"><h2>Trainer</h2><p>How you've matched the solved advice this session.</p></div>
+                            <div class="tally-row">
+                                <div class="tally-chip"><div class="n" id="tally-correct">0</div><div class="l">Correct</div></div>
+                                <div class="tally-chip"><div class="n" id="tally-incorrect">0</div><div class="l">Incorrect</div></div>
+                                <div class="tally-chip"><div class="n" id="tally-ev">0.00</div><div class="l">EV Given Up</div></div>
+                            </div>
+                        </div>
+
+                        <div class="warning-banner">
+                            Card counting is legal but casinos may refuse service to players who count. All figures here are simulated, long-run averages &mdash; the edge is roughly 1%, and short-session variance dwarfs it.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================= STRATEGY GRID TAB ========================= -->
+            <section class="tab-content" id="tab-grid" role="tabpanel">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h2>Strategy Grid</h2>
+                        <p>Solver output for the selected ruleset &mdash; the argmax of exact EV, not a transcribed chart. A dot marks a cell where the top two actions are within 0.001 EV of each other.</p>
+                    </div>
+                    <div class="grid-legend" id="grid-legend"></div>
+                    <div id="grid-tables"></div>
+                    <div class="status-line" id="grid-status"></div>
+                </div>
+            </section>
+
+            <!-- ============================= COUNTING TAB ============================= -->
+            <section class="tab-content" id="tab-counting" role="tabpanel">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Live Count</h2>
+                            <p>Click a rank as it's dealt, or run the drill below. Betting system floors true count for bet sizing; playing system rounds to nearest for play deviations.</p>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sel-betting-system">Betting System</label>
+                                <select id="sel-betting-system"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="num-decks-count">Shoe Decks</label>
+                                <input type="number" id="num-decks-count" value="6" min="1" max="8">
+                            </div>
+                        </div>
+                        <div class="rank-deal-grid" id="rank-deal-grid"></div>
+                        <div class="btn-row">
+                            <button class="btn-ghost" id="btn-count-reset">Reset Shoe</button>
+                        </div>
+                        <div class="tally-grid" id="tally-grid"></div>
+                    </div>
+
+                    <div class="stack">
+                        <div class="glass-card">
+                            <div class="card-header"><h2>Betting System</h2></div>
+                            <div class="metrics-grid">
+                                <div class="metric-card"><span class="metric-title">Running</span><span class="metric-value" id="c-bet-rc">0</span></div>
+                                <div class="metric-card"><span class="metric-title">True (floor)</span><span class="metric-value" id="c-bet-tc">&mdash;</span></div>
+                            </div>
+                        </div>
+                        <div class="glass-card">
+                            <div class="card-header"><h2>Playing System <span style="font-weight:400;color:var(--text-secondary);font-size:0.8rem;">(uses the shared system selector above)</span></h2></div>
+                            <div class="metrics-grid">
+                                <div class="metric-card"><span class="metric-title">Running</span><span class="metric-value" id="c-play-rc">0</span></div>
+                                <div class="metric-card"><span class="metric-title">True (nearest)</span><span class="metric-value" id="c-play-tc">&mdash;</span></div>
+                            </div>
+                        </div>
+                        <div class="glass-card">
+                            <div class="card-header"><h2>Drill Mode</h2><p>Flashes cards, then asks you to guess the true count.</p></div>
+                            <div class="drill-flash" id="drill-flash">&mdash;</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="drill-guess">Your True Count Guess</label>
+                                    <input type="number" id="drill-guess" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button class="glow-btn" id="btn-drill-start">Start Drill</button>
+                                </div>
+                            </div>
+                            <div class="btn-row"><button class="btn-ghost" id="btn-drill-check" disabled>Check Guess</button></div>
+                            <div class="status-line" id="drill-status"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================= BANKROLL TAB ============================= -->
+            <section class="tab-content" id="tab-bankroll" role="tabpanel">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Kelly Bet Sizing</h2>
+                            <p>Bet = growth-optimal fraction of bankroll at the current true count. Half-Kelly is the default hedge against edge-estimate error.</p>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="br-bankroll">Bankroll</label><input type="number" id="br-bankroll" value="10000" min="0"></div>
+                            <div class="form-group"><label for="br-tc">True Count</label><input type="number" id="br-tc" value="2" step="1"></div>
+                        </div>
+                        <div class="form-row-3">
+                            <div class="form-group"><label for="br-min">Table Min</label><input type="number" id="br-min" value="10" min="1"></div>
+                            <div class="form-group"><label for="br-max">Table Max</label><input type="number" id="br-max" value="1000" min="1"></div>
+                            <div class="form-group"><label for="br-chip">Chip Size</label><input type="number" id="br-chip" value="5" min="1"></div>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span>Kelly Fraction</span><span class="val" id="br-fraction-val">0.50</span></div>
+                            <input type="range" id="br-fraction" min="0.1" max="1" step="0.05" value="0.5">
+                        </div>
+                        <button class="glow-btn" id="btn-stake">Calculate</button>
+                        <div class="status-line" id="bankroll-status"></div>
+
+                        <div class="metrics-grid">
+                            <div class="metric-card"><span class="metric-title">Recommended Bet</span><span class="metric-value" id="br-bet">&mdash;</span></div>
+                            <div class="metric-card"><span class="metric-title">Player Edge</span><span class="metric-value" id="br-edge">&mdash;</span></div>
+                            <div class="metric-card"><span class="metric-title">Risk of Ruin</span><span class="metric-value" id="br-ror">&mdash;</span></div>
+                            <div class="metric-card"><span class="metric-title">N&#8320; (hands)</span><span class="metric-value" id="br-nzero">&mdash;</span></div>
+                        </div>
+                    </div>
+
+                    <div class="stack">
+                        <div class="glass-card">
+                            <div class="card-header"><h2>Bet Ramp</h2><p>Recommended bet across a range of true counts, at the current bankroll and Kelly fraction.</p></div>
+                            <div class="ramp-chart" id="ramp-chart"></div>
+                            <div class="status-line" id="ramp-status"></div>
+                        </div>
+                        <div class="warning-banner">
+                            A "$240 optimal bet" is not advice without the odds attached &mdash; every figure above assumes the edge estimate is correct and holds only over many, many hands.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================= SIMULATOR TAB ============================= -->
+            <section class="tab-content" id="tab-simulator" role="tabpanel">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h2>Monte Carlo Battery</h2>
+                            <p>Runs real rounds through the game engine (capped at 200,000 hands per request) and reports the mean result with its standard error.</p>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="sim-hands">Hands</label><input type="number" id="sim-hands" value="20000" min="100" max="200000" step="100"></div>
+                            <div class="form-group"><label for="sim-other">Other Players at Table</label><input type="number" id="sim-other" value="0" min="0" max="6"></div>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" id="sim-deviations" checked style="width:auto;margin-right:6px;"> Use count-indexed deviations (requires a pre-built index cache)</label>
+                        </div>
+                        <button class="glow-btn" id="btn-simulate">Run Battery</button>
+                        <div class="status-line" id="sim-status"></div>
+
+                        <div class="metrics-grid">
+                            <div class="metric-card"><span class="metric-title">Mean EV / Hand</span><span class="metric-value" id="sim-mean">&mdash;</span></div>
+                            <div class="metric-card"><span class="metric-title">Std Error</span><span class="metric-value" id="sim-se">&mdash;</span></div>
+                            <div class="metric-card"><span class="metric-title">Variance</span><span class="metric-value" id="sim-var">&mdash;</span></div>
+                            <div class="metric-card"><span class="metric-title">Doubled</span><span class="metric-value" id="sim-doubled">&mdash;</span></div>
+                            <div class="metric-card"><span class="metric-title">Split Rounds</span><span class="metric-value" id="sim-splits">&mdash;</span></div>
+                            <div class="metric-card"><span class="metric-title">Wall Time</span><span class="metric-value" id="sim-seconds">&mdash;</span></div>
+                        </div>
+                    </div>
+
+                    <div class="stack">
+                        <div class="glass-card">
+                            <div class="card-header"><h2>Edge vs. True Count</h2><p>From the ruleset's locked edge model (Phase 8), if one has been generated for this ruleset + system.</p></div>
+                            <div class="ramp-chart" id="edge-chart"></div>
+                            <div class="status-line" id="edge-status"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/rules.js"></script>
+    <script src="js/table.js"></script>
+    <script src="js/grid.js"></script>
+    <script src="js/counting.js"></script>
+    <script src="js/bankroll.js"></script>
+    <script src="js/simulator.js"></script>
+</body>
+</html>

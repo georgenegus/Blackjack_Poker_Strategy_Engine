@@ -1,0 +1,5 @@
+# Python sources are hashed byte-for-byte to validate cached grids/indices
+# (src/utils/cache_manager.py) and the locked poker evaluator/preflop baselines.
+# Force LF on checkout everywhere so a Windows clone (core.autocrlf=true) doesn't
+# see CRLF, mismatch every hash, and silently re-solve all 32 grids.
+*.py text eol=lf

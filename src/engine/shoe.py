@@ -7,7 +7,9 @@ import numpy as np
 from src.engine.cards import Card, NUM_BUCKETS, RANK_INDEX, SUITS
 
 # Cards per bucket in one 52-card deck: 4 each of 2-9 and A, 16 of T (T/J/Q/K collapsed).
-_DECK_COMPOSITION = np.array([4, 4, 4, 4, 4, 4, 4, 4, 16, 4], dtype=np.int64)
+# Public (not underscore-prefixed): index_builder.py (Phase 7) reuses this directly to
+# build a fractional-deck neutral composition for count-to-composition reconstruction.
+DECK_COMPOSITION = np.array([4, 4, 4, 4, 4, 4, 4, 4, 16, 4], dtype=np.int64)
 _BUCKET_RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "A"]
 _TEN_FACES = ["T", "J", "Q", "K"]
 
@@ -16,7 +18,7 @@ class Shoe:
     def __init__(self, num_decks: int, penetration: float = 0.75, rng: Optional[np.random.Generator] = None):
         self.num_decks = num_decks
         self.penetration = penetration
-        self.composition = _DECK_COMPOSITION * num_decks
+        self.composition = DECK_COMPOSITION * num_decks
         self._initial_composition = self.composition.copy()
         self.total_cards = int(self.composition.sum())
         self.dealt = 0

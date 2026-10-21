@@ -6,11 +6,21 @@ DAS, or payout. See .agents/instructions.md's "RuleSet Is the Single Source
 of Truth" section.
 """
 
+import itertools
 from dataclasses import dataclass
 from fractions import Fraction
+from typing import Iterator
 
 _SURRENDER_CODES = {"late": "ls", "early": "es", "none": "ns"}
 DOUBLE_RANGES = {"any": None, "9-11": {9, 10, 11}, "10-11": {10, 11}}
+
+# The 32 rulesets scripts/build_all_grids.py, build_all_indices.py, and app.py's
+# startup registries all pre-solve/load -- the one definition, not three copies
+# to keep in sync (all three used to define this independently).
+SHIPPED_DECKS = (2, 4, 6, 8)
+SHIPPED_H17_OPTIONS = (False, True)
+SHIPPED_DAS_OPTIONS = (True, False)
+SHIPPED_SURRENDER_OPTIONS = ("late", "none")
 
 
 @dataclass(frozen=True)
@@ -68,3 +78,13 @@ def double_allowed(rules: RuleSet, total: int, is_soft: bool) -> bool:
     allowed = DOUBLE_RANGES[rules.double_on]
     hard_equivalent = total - 10 if is_soft else total
     return allowed is None or hard_equivalent in allowed
+
+
+def shipped_rulesets() -> Iterator[RuleSet]:
+    """Every ruleset this project pre-solves and ships (2/4/6/8 decks x S17/H17
+    x DAS/no-DAS x late/no surrender = 32) -- all other fields left at their
+    RuleSet defaults."""
+    for decks, h17, das, surrender in itertools.product(
+        SHIPPED_DECKS, SHIPPED_H17_OPTIONS, SHIPPED_DAS_OPTIONS, SHIPPED_SURRENDER_OPTIONS
+    ):
+        yield RuleSet(num_decks=decks, dealer_hits_soft_17=h17, double_after_split=das, surrender=surrender)

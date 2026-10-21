@@ -66,8 +66,13 @@ def _value_to_bucket(value: int) -> int:
     return value - 2
 
 
-def _comp_minus_values(rules: RuleSet, *values: int) -> Tuple[int, ...]:
-    comp = Shoe(rules.num_decks).composition.copy()
+def _comp_minus_values(base, *values: int) -> Tuple[int, ...]:
+    """`base` minus one card of each given point value. `base` is a 10-bucket
+    composition array -- a fresh neutral shoe for ordinary grid-solving, or a
+    TC-perturbed composition when reused by index_builder.py (Phase 7) to re-solve
+    a cell at a non-neutral count; either way this function itself is agnostic to
+    which."""
+    comp = base.copy()
     for v in values:
         comp[_value_to_bucket(v)] -= 1
     return tuple(int(x) for x in comp)
@@ -155,11 +160,21 @@ def _solve_non_pair_cell(total: int, is_soft: bool, upcard: int, comp: Tuple[int
 
 def _solve_hard_cell(total: int, upcard: int, rules: RuleSet, full) -> CellResult:
     """Frequency-weighted solve across every valid non-pair decomposition of `total`
-    -- see the module docstring for why a single arbitrary decomposition is not safe."""
+    -- see the module docstring for why a single arbitrary decomposition is not safe.
+
+    Weights are drawn from `full` with the dealer's upcard already removed: by the
+    time the player holds two cards, the upcard is a known, dealt card, not still in
+    the shoe. Weighting from the raw fresh-shoe counts instead slightly overweights
+    whichever decomposition happens to share the upcard's rank (quantified at
+    -0.0004pp of aggregate house edge for 2-deck -- real, but far below Check 2's
+    tolerance; see the build plan's Phase 5 Check 2 findings)."""
+    weight_source = full.copy()
+    weight_source[_value_to_bucket(upcard)] -= 1
+
     weighted_comps = []
     for c1, c2 in _hard_decompositions(total):
-        w = float(full[_value_to_bucket(c1)]) * float(full[_value_to_bucket(c2)])
-        comp = _comp_minus_values(rules, c1, c2, upcard)
+        w = float(weight_source[_value_to_bucket(c1)]) * float(weight_source[_value_to_bucket(c2)])
+        comp = _comp_minus_values(full, c1, c2, upcard)
         weighted_comps.append((w, comp))
     total_w = sum(w for w, _ in weighted_comps)
 
@@ -206,14 +221,14 @@ def solve_grid(rules: RuleSet) -> Dict[str, Dict[str, CellResult]]:
     for total in SOFT_TOTALS:
         x = total - 11
         for upcard in UPCARD_VALUES:
-            comp = _comp_minus_values(rules, 11, x, upcard)
+            comp = _comp_minus_values(full, 11, x, upcard)
             grid["soft"][f"{total}v{upcard}"] = _solve_non_pair_cell(total, True, upcard, comp, rules)
 
     for rank in PAIR_RANKS:
         rank_bucket = RANK_INDEX[rank]
         rank_value = 11 if rank == "A" else (10 if rank == "T" else int(rank))
         for upcard in UPCARD_VALUES:
-            comp = _comp_minus_values(rules, rank_value, rank_value, upcard)
+            comp = _comp_minus_values(full, rank_value, rank_value, upcard)
             grid["pairs"][f"{rank}{rank}v{upcard}"] = _solve_pair_cell(rank_bucket, upcard, comp, rules)
 
     return grid

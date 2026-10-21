@@ -8,25 +8,14 @@ solve on demand, only ever load an already-cached grid via solve_grid_cached().
     py scripts/build_all_grids.py
 """
 
-import itertools
 import os
 import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.engine.rules import RuleSet
+from src.engine.rules import shipped_rulesets
 from src.strategy.grid_builder import solve_grid_cached
-
-DECKS = [2, 4, 6, 8]
-H17_OPTIONS = [False, True]     # dealer_hits_soft_17
-DAS_OPTIONS = [True, False]
-SURRENDER_OPTIONS = ["late", "none"]
-
-
-def shipped_rulesets():
-    for decks, h17, das, surrender in itertools.product(DECKS, H17_OPTIONS, DAS_OPTIONS, SURRENDER_OPTIONS):
-        yield RuleSet(num_decks=decks, dealer_hits_soft_17=h17, double_after_split=das, surrender=surrender)
 
 
 def main() -> None:

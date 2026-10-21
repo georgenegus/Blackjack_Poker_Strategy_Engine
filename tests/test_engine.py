@@ -11,7 +11,7 @@ import pytest
 
 from src.engine.cards import Card
 from src.engine.dealer import play_dealer
-from src.engine.game import Action, play_round
+from src.engine.game import Action, play_hands_interactive, play_round
 from src.engine.hand import Hand
 from src.engine.rules import RuleSet
 
@@ -193,3 +193,37 @@ def test_illegal_action_raises():
     shoe = ScriptedShoe(["7", "T", "9", "6"])  # player 7,9=16 (no pair, can't split)
     with pytest.raises(ValueError):
         play_round(shoe, RuleSet(), bet=10, decide_fn=_always(Action.SPLIT))
+
+
+# --- play_hands_interactive: the generator Phase 10's API drives directly (not through
+# --- a decide_fn) -- verifies yield/send and yield-from delegation across split hands,
+# --- not just that play_round's own driven version still works. -----------------------
+
+def test_play_hands_interactive_split_then_stand_both_hands():
+    initial = Hand(["8", "8"])
+    dealer_up = Card(rank="6", suit=None)
+    shoe = ScriptedShoe(["3", "5"])  # left hand's new card, then right hand's new card
+    rules = RuleSet()  # DAS=True by default
+
+    gen = play_hands_interactive(initial, bet=10, dealer_up=dealer_up, shoe=shoe, rules=rules)
+
+    hand, legal = next(gen)
+    assert hand.cards == [Card("8", None), Card("8", None)]
+    assert Action.SPLIT in legal
+
+    hand, legal = gen.send(Action.SPLIT)
+    assert hand.total == 11  # left hand: 8 + 3
+    assert Action.SURRENDER not in legal  # split hands never offer surrender
+    assert Action.DOUBLE in legal  # DAS is on by default
+
+    hand, legal = gen.send(Action.STAND)
+    assert hand.total == 13  # right hand: 8 + 5
+
+    with pytest.raises(StopIteration) as excinfo:
+        gen.send(Action.STAND)
+    results = excinfo.value.value
+
+    assert len(results) == 2
+    assert results[0].hand.total == 11
+    assert results[1].hand.total == 13
+    assert all(not r.surrendered and not r.doubled for r in results)

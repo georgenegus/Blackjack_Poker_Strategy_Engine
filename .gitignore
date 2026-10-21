@@ -17,6 +17,12 @@ build/
 # only raw Monte Carlo output is ignored
 data/sims/
 
+# Poker area (markdowns/poker/poker_build_plan_v1.md) — same policy, applied to its own
+# large/regenerable artifacts. Solved preflop strategy and the preflop equity matrix ARE
+# committed; the 7-card evaluator lookup table and raw CFR checkpoints are not.
+data/poker/evaluator/
+data/poker/solves/
+
 # OS
 .DS_Store
 Thumbs.db

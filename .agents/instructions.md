@@ -31,12 +31,12 @@ T20's `Win_Probability_Model` repo had a costly bug: a pre-existing cache file w
 
 ## Running the Project
 
-Not yet implemented — populated as each phase lands. Planned entry points (see the build plan):
-
 ```bash
-py main.py --decks 6 --s17 --das --surrender late --print-grid   # Phase 4
-py tests/regression_test.py                                       # Phase 12 — the gate
-py app.py                                                          # Phase 10 — serves on http://127.0.0.1:5000
+py main.py --decks 6 --s17 --das --surrender late --print-grid    # Phase 4 — CLI grid printout
+py -m pytest tests/ --ignore=tests/regression_test.py -q           # full unit test suite
+py tests/regression_test.py --fast                                 # Phase 12 — the gate, CI mode (~1 min)
+py tests/regression_test.py                                        # Phase 12 — the gate, full mode (recomputes exact house edge for all 4 anchors + MC sanity, several minutes)
+py app.py                                                           # Phase 10/11 — serves the app + API on http://127.0.0.1:5000
 ```
 
 ## Common Pitfalls
@@ -55,3 +55,28 @@ py app.py                                                          # Phase 10 �
 | This File | `.agents/instructions.md` | Working instructions for the AI agent |
 | Project Overview | `.agents/project-overview.md` | Quick reference for architecture, file locations, current baselines |
 | Coding Standards | `.agents/coding-standards.md` | Code conventions and correctness/data-integrity rules |
+
+---
+
+## Poker Area
+
+A second, strictly additive engine lives under `src/poker/`, `data/poker/`, `tests/poker/`, `scripts/poker/`, following `markdowns/poker/poker_build_plan_v1.md`. Before touching any of it, read that plan (its own instructions-equivalent content lives in three new skills under `.agents/skills/poker_*`, not duplicated here) plus:
+
+1. `.agents/skills/poker_evaluator_conventions/SKILL.md` — hand evaluator, equity engine, card/board encoding
+2. `.agents/skills/poker_range_conventions/SKILL.md` — the 169-grid notation, combo weights, card removal
+3. `.agents/skills/poker_solver_conventions/SKILL.md` — `GameSpec`, CFR, exploitability, push/fold, ICM
+
+**The two headline rules**, the poker area's equivalent of this file's blackjack rules above:
+
+- Every equity, EV, frequency, and exploitability figure is a function of an explicit `(GameSpec, Range)` pair (`src/poker/spec.py`) — never a hardcoded stack depth, rake, or bet-size grid. `GameSpec` plays exactly the role `RuleSet` plays for blackjack.
+- A solved strategy without a measured exploitability recorded alongside it is not a result. Name the field `abstraction_exploitability_mbb`, never bare "exploitability" — it is measured inside the card/bet abstraction, not at a real table.
+
+**Non-destructive boundary.** Poker work must never modify `src/engine/`, `src/strategy/`, `src/counting/`, `src/simulation/`, `src/bankroll/`, or `tests/regression_test.py` — the blackjack engine stays frozen behind its own `data/baselines/`. The only permitted edit to an existing file outside `.agents/`/`CLAUDE.md` is `app.py`, which gains exactly one import and one `register_blueprint()` call for the poker Flask Blueprint (`src/poker/api.py`). Run `py tests/regression_test.py --fast` after every poker-area change, not just at the end — a poker bug must never be mistaken for (or mask) a blackjack regression.
+
+**Running the poker engine** (as phases land — see the build plan's tracking table for what's implemented so far):
+
+```bash
+py -m pytest tests/poker/ --ignore=tests/poker/regression_test.py -q   # poker unit tests
+py tests/poker/regression_test.py --fast                                # poker gate, CI mode
+py tests/regression_test.py --fast                                      # blackjack gate — must still pass
+```
